@@ -10,37 +10,36 @@
 #include <limits.h>
 
 /*
-1.) Wildcards
-2.) Print file names
-3.) Make own printf statement
-*/
+ 1.) Wildcards
+ 2.) Print file names
+ 3.) Make own printf statement
+ */
 
 #define MAX_PATHSIZE 1024
 #define CHECKFILENAME 1; // 0: Match file name, 1: Don't match file name
 
-int readFile(char * fileName, char *findString)
+int readFile(char * fileName, char *findString, char *fullPathName)
 {
     FILE *fp;
     int foundFlag = 0;
     if ((fp=fopen(fileName,"r")) == NULL)
     {
-        fprintf(stderr, "ERROR OPENING THE FILE\n");
+        fprintf(stderr, "CANNOT OPEN THE FILE\n");
         return 0;
     }
-    char  tmp[256]={0x0};
+    char tmp[256]={0x0};
     while(fp!=NULL && fgets(tmp, sizeof(tmp),fp)!=NULL)
     {
         if ((strstr(tmp, findString)) && (foundFlag == 0)) // Implement wildcards here
         {
             foundFlag = 1;
-            printf("%s\n", fileName);
+            printf("%s\n", strcat(fullPathName,fileName));
             printf("%s", tmp);
         }
-        else if ((strstr(tmp, findString)) && foundFlag)
+        else if ((strstr(tmp, findString)) && foundFlag) // Implement wildcards here
         {
             printf("%s", tmp);
         }
-        
     }
     if(fp!=NULL)
     {
@@ -48,7 +47,6 @@ int readFile(char * fileName, char *findString)
     }
     return 0;
 }
-
 const char *get_filename_ext(const char *filename)
 {
     const char *dot = strrchr(filename, '.');
@@ -91,9 +89,17 @@ void printdir(char *dir, char * findString, int checkFileName, char * findType, 
             const char *extension = get_filename_ext(entry->d_name);
             if((strcmp(findType,extension) == 0) || strcmp(findType,"0") == 0)
             {
-                //printf("%*s%s\n",depth,"",entry->d_name);
-                readFile(entry->d_name, findString);
-                //printf("\n********EOF*********\n\n");
+                long size;
+                char *buf;
+                char *fullPath;
+                size = pathconf(".", _PC_PATH_MAX);
+                if ((buf = (char *)malloc((size_t)size)) != NULL)
+                {
+                    fullPath = getcwd(buf, (size_t)size);
+                }
+                fullPath[strlen(fullPath)] = '/';
+                fullPath[strlen(fullPath)+1] = '\0';
+                readFile(entry->d_name, findString, fullPath);
             }
         }
     }
