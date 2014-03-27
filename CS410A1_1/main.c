@@ -89,27 +89,34 @@ int checkDot(char * findString, char * mainString)
 
 int checkStar(char * findString, char * mainString)
 {
+    
     char test1String[1024],test2String[1024];
     strcpy(test1String, findString);
     strcpy(test2String, findString);
     const char part1 = *(strchr(test1String, '*') - 1); // Character before the wildcard
     const char * part2 = strchr(test2String, '*') + 1; // Part of findString right after the wildcard
     const char * found = strstr(mainString, part2);
-    int part2index = found - mainString; // Index of the 2nd part of findString in the file line (mainString)
-    
-    int k=0;
-    for(int i = part2index; part2[k] != '\0';i++)
+    if(found)
     {
-        // If the second string does not match
-        if (mainString[i] != part2[k])
+        int part2index = found - mainString; // Index of the 2nd part of findString in the file line (mainString)
+        int k=0;
+        for(int i = part2index; part2[k] != '\0';i++)
+        {
+            // If the second string does not match
+            if (mainString[i] != part2[k])
+            {
+                return 0;
+            }
+            k++;
+        }
+        
+        // If the character before the wildcard does not match
+        if (mainString[part2index-1] != part1)
         {
             return 0;
         }
-        k++;
     }
-    
-    // If the character before the wildcard does not match
-    if (mainString[part2index-1] != part1)
+    else
     {
         return 0;
     }
@@ -131,13 +138,14 @@ int readFile(char * fileName, char *findString, char *fullPathName, int isWildCa
         if(isWildCard) // If there are valid wildcards
         {
             int isDot = checkDot(findString, tmp);
-            if ((foundFlag == 0) && isDot) // Implement wildcards here
+            int isStar = checkStar(findString, tmp);
+            if ((foundFlag == 0) && (isDot || isStar)) // Implement wildcards here
             {
                 foundFlag = 1;
                 printf("%s\n", strcat(fullPathName,fileName));
                 printf("%s", tmp);
             }
-            else if (foundFlag && isDot) // Implement wildcards here
+            else if (foundFlag && (isDot || isStar)) // Implement wildcards here
             {
                 printf("%s", tmp);
             }
