@@ -15,10 +15,79 @@
  2.) Make own printf statement
  */
 
-#define MAX_PATHSIZE 1024
 #define CHECKFILENAME 1; // 0: Match file name, 1: Don't match file name
 
-int readFile(char * fileName, char *findString, char *fullPathName)
+int isAlNum(char *findString)
+{
+    int i = 0;
+    while (findString[i] != '\0')
+    {
+        if (isalnum(findString[i]))
+            i++;
+        else
+            return 0;
+    }
+    return 1;
+}
+
+int checkValidWildCards(char * findString)
+{
+    // 0: No valid wild cards present
+    // 1: Valid wild cards present
+    // 2: Invalid wild card characters present
+    char *dot, *star, *question;
+    if (isAlNum(findString))
+        return 0;
+    else
+    {
+        // Verify if there's just one of each valid wild card character
+        if (((dot = strchr(findString, '.')) != NULL && strchr(dot, '.') == NULL) ||
+            ((star = strchr(findString, '*')) != NULL && strchr(star, '*') == NULL) ||
+            ((question = strchr(findString, '.')) != NULL && strchr(question, '?') == NULL))
+            return 1;
+        else
+            return 2;
+    }
+}
+
+int checkDot(char * findString, char * mainString)
+{
+    char test1String[1024],test2String[1024];
+    strcpy(test1String, findString);
+    strcpy(test2String, findString);
+    const char *part1 = strtok(test1String, ".");
+    const char * part2 = strchr(test2String, '.') + 1;
+    
+    const char * found = strstr(mainString, part1);
+    if (found)
+    {
+        int part1index = found - mainString;
+        int part2index = part1index + strlen(part1)+1; // Index of the 2nd half of string
+        if (isalnum(mainString[part2index - 1])) // Check if the middle character is alphanumeric
+        {
+            int k=0;
+            for(int i = part2index; part2[k] != '\0';i++)
+            {
+                if (mainString[i] != part2[k])
+                {
+                    return 0;
+                }
+                k++;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+    return 1;
+}
+
+int readFile(char * fileName, char *findString, char *fullPathName, int isWildCard)
 {
     FILE *fp;
     int foundFlag = 0;
@@ -30,15 +99,32 @@ int readFile(char * fileName, char *findString, char *fullPathName)
     char tmp[256]={0x0};
     while(fp!=NULL && fgets(tmp, sizeof(tmp),fp)!=NULL)
     {
-        if ((strstr(tmp, findString)) && (foundFlag == 0)) // Implement wildcards here
+        if(isWildCard) // If there are valid wildcards
         {
-            foundFlag = 1;
-            printf("%s\n", strcat(fullPathName,fileName));
-            printf("%s", tmp);
+            int isDot = checkDot(findString, tmp);
+            if ((foundFlag == 0) && isDot) // Implement wildcards here
+            {
+                foundFlag = 1;
+                printf("%s\n", strcat(fullPathName,fileName));
+                printf("%s", tmp);
+            }
+            else if (foundFlag && isDot) // Implement wildcards here
+            {
+                printf("%s", tmp);
+            }
         }
-        else if ((strstr(tmp, findString)) && foundFlag) // Implement wildcards here
+        else // If there are no valid wildcards
         {
-            printf("%s", tmp);
+            if ((strstr(tmp, findString)) && (foundFlag == 0)) // Implement wildcards here
+            {
+                foundFlag = 1;
+                printf("%s\n", strcat(fullPathName,fileName));
+                printf("%s", tmp);
+            }
+            else if ((strstr(tmp, findString)) && foundFlag) // Implement wildcards here
+            {
+                printf("%s", tmp);
+            }
         }
     }
     if(fp!=NULL)
@@ -47,6 +133,7 @@ int readFile(char * fileName, char *findString, char *fullPathName)
     }
     return 0;
 }
+
 const char *get_filename_ext(const char *filename)
 {
     const char *dot = strrchr(filename, '.');
@@ -54,7 +141,7 @@ const char *get_filename_ext(const char *filename)
     return dot + 1;
 }
 
-void printdir(char *dir, char * findString, int checkFileName, char * findType, int depth)
+void printdir(char *dir, char * findString, int checkFileName, char * findType, int isWildCard, int depth)
 {
     DIR *dp;
     struct dirent *entry;
@@ -82,7 +169,7 @@ void printdir(char *dir, char * findString, int checkFileName, char * findType, 
                 printf("%*s%s/\n",depth,"",entry->d_name);
             }
             /* Recurse at a new indent level */
-            printdir(entry->d_name,findString, checkFileName, findType, depth+4);
+            printdir(entry->d_name,findString, checkFileName, findType, isWildCard, depth+4);
         }
         else if(strstr(entry->d_name, findString) || checkFileName)
         {
@@ -99,7 +186,7 @@ void printdir(char *dir, char * findString, int checkFileName, char * findType, 
                 }
                 fullPath[strlen(fullPath)] = '/';
                 fullPath[strlen(fullPath)+1] = '\0';
-                readFile(entry->d_name, findString, fullPath);
+                readFile(entry->d_name, findString, fullPath, isWildCard);
             }
         }
     }
@@ -158,9 +245,14 @@ int main (int argc, char **argv)
         default:
             abort ();
     }
-    
+    int isWildCard = checkValidWildCards(svalue);
     fvalue == NULL ? fvalue = "0" : fvalue; // Flag to show NULL 'f' argument
-    printdir(pvalue, svalue, checkFileName, fvalue, 0);
+    if (isWildCard == 2)
+    {
+        printf("Invalid wildcard character(s) present in string '%s'\n",svalue);
+        return 0;
+    }
+    printdir(pvalue, svalue, checkFileName, fvalue, isWildCard, 0);
     for (index = optind; index < argc; index++)
         printf ("Non-option argument %s\n", argv[index]);
     return 0;
