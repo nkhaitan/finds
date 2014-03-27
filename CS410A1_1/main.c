@@ -40,10 +40,10 @@ int checkValidWildCards(char * findString)
         return 0;
     else
     {
-        // Verify if there's just one of each valid wild card character
-        if (((dot = strchr(findString, '.')) != NULL && strchr(dot, '.') == NULL) ||
-            ((star = strchr(findString, '*')) != NULL && strchr(star, '*') == NULL) ||
-            ((question = strchr(findString, '.')) != NULL && strchr(question, '?') == NULL))
+        // Verify if there are only valid wild card characters
+        if ((dot = strchr(findString, '.')) != NULL ||
+            (star = strchr(findString, '*')) != NULL||
+            (question = strchr(findString, '?')) != NULL)
             return 1;
         else
             return 2;
@@ -81,6 +81,35 @@ int checkDot(char * findString, char * mainString)
         }
     }
     else
+    {
+        return 0;
+    }
+    return 1;
+}
+
+int checkStar(char * findString, char * mainString)
+{
+    char test1String[1024],test2String[1024];
+    strcpy(test1String, findString);
+    strcpy(test2String, findString);
+    const char part1 = *(strchr(test1String, '*') - 1); // Character before the wildcard
+    const char * part2 = strchr(test2String, '*') + 1; // Part of findString right after the wildcard
+    const char * found = strstr(mainString, part2);
+    int part2index = found - mainString; // Index of the 2nd part of findString in the file line (mainString)
+    
+    int k=0;
+    for(int i = part2index; part2[k] != '\0';i++)
+    {
+        // If the second string does not match
+        if (mainString[i] != part2[k])
+        {
+            return 0;
+        }
+        k++;
+    }
+    
+    // If the character before the wildcard does not match
+    if (mainString[part2index-1] != part1)
     {
         return 0;
     }
