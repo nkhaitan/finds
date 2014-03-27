@@ -10,9 +10,9 @@
 #include <limits.h>
 
 /*
+ WORK LEFT:
  1.) Wildcards
- 2.) Print file names
- 3.) Make own printf statement
+ 2.) Make own printf statement
  */
 
 #define MAX_PATHSIZE 1024
@@ -24,7 +24,7 @@ int readFile(char * fileName, char *findString, char *fullPathName)
     int foundFlag = 0;
     if ((fp=fopen(fileName,"r")) == NULL)
     {
-        fprintf(stderr, "CANNOT OPEN THE FILE\n");
+        fprintf(stderr, "CANNOT OPEN THE FILE: %s\n\n",strcat(fullPathName,fileName));
         return 0;
     }
     char tmp[256]={0x0};
@@ -159,7 +159,6 @@ int main (int argc, char **argv)
             abort ();
     }
     
-    printf ("Path name = %s,  File extension = .%s,  string = %s\n", pvalue, fvalue, svalue);
     fvalue == NULL ? fvalue = "0" : fvalue; // Flag to show NULL 'f' argument
     printdir(pvalue, svalue, checkFileName, fvalue, 0);
     for (index = optind; index < argc; index++)
