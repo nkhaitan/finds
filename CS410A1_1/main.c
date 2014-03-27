@@ -22,7 +22,7 @@ int isAlNum(char *findString)
     int i = 0;
     while (findString[i] != '\0')
     {
-        if (isalnum(findString[i]))
+        if (isalnum(findString[i]) != 0)
             i++;
         else
             return 0;
@@ -52,27 +52,72 @@ int checkValidWildCards(char * findString)
 
 int checkDot(char * findString, char * mainString)
 {
-    char test1String[1024],test2String[1024];
+    char test1String[1024];
     strcpy(test1String, findString);
-    strcpy(test2String, findString);
-    const char *part1 = strtok(test1String, ".");
-    const char * part2 = strchr(test2String, '.') + 1;
     
-    const char * found = strstr(mainString, part1);
-    if (found)
+    if (strchr(findString, '.') !=NULL)
     {
-        int part1index = found - mainString;
-        int part2index = part1index + strlen(part1)+1; // Index of the 2nd half of string
-        if (isalnum(mainString[part2index - 1])) // Check if the middle character is alphanumeric
+        const char * part1 = strtok(test1String, ".");
+        const char * part2 = strchr(findString, '.') + 1;
+        const char * found = strstr(mainString, part1);
+        if (found)
         {
-            int k=0;
-            for(int i = part2index; part2[k] != '\0';i++)
+            int part1index = found - mainString;
+            int part2index = part1index + strlen(part1) + 1; // Index of the 2nd half of string
+            if (isalnum(mainString[part2index - 1])) // Check if the middle character is alphanumeric
             {
+                int i,k=0;
+                for(i = part2index; part2[k] != '\0';i++)
+                {
+                    if (mainString[i] != part2[k])
+                    {
+                        return 0;
+                    }
+                    k++;
+                }
+            }
+            else
+            {
+                return 0;
+            }
+        }
+        else
+        {
+            return 0;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+    
+    return 1;
+}
+
+int checkStar(char * findString, char * mainString)
+{
+    if (strchr(findString, '*') != NULL)
+    {
+        const char part1 = *(strchr(findString, '*') - 1); // Character before the wildcard
+        const char * part2 = strchr(findString, '*') + 1; // Part of findString right after the wildcard
+        const char * found = strstr(mainString, part2);
+        if(found)
+        {
+            int part2index = found - mainString; // Index of the 2nd part of findString in the file line (mainString)
+            int i,k=0;
+            for(i = part2index; part2[k] != '\0';i++)
+            {
+                // If the second string does not match
                 if (mainString[i] != part2[k])
                 {
                     return 0;
                 }
                 k++;
+            }
+            // If the character before the wildcard does not match
+            if (mainString[part2index-1] != part1)
+            {
+                return 0;
             }
         }
         else
@@ -87,31 +132,33 @@ int checkDot(char * findString, char * mainString)
     return 1;
 }
 
-int checkStar(char * findString, char * mainString)
+int checkQuestion(char * findString, char * mainString)
 {
-    
-    char test1String[1024],test2String[1024];
-    strcpy(test1String, findString);
-    strcpy(test2String, findString);
-    const char part1 = *(strchr(test1String, '*') - 1); // Character before the wildcard
-    const char * part2 = strchr(test2String, '*') + 1; // Part of findString right after the wildcard
-    const char * found = strstr(mainString, part2);
-    if(found)
+    if (strchr(findString, '?') != NULL)
     {
-        int part2index = found - mainString; // Index of the 2nd part of findString in the file line (mainString)
-        int k=0;
-        for(int i = part2index; part2[k] != '\0';i++)
+        const char part1 = *(strchr(findString, '?') - 1); // Character before the wildcard
+        const char * part2 = strchr(findString, '?') + 1; // Part of findString right after the wildcard
+        const char * found = strstr(mainString, part2);
+        if(found)
         {
-            // If the second string does not match
-            if (mainString[i] != part2[k])
+            int part2index = found - mainString; // Index of the 2nd part of findString in the file line (mainString)
+            int i, k=0;
+            for( i = part2index; part2[k] != '\0';i++)
+            {
+                // If the second string does not match
+                if (mainString[i] != part2[k])
+                {
+                    return 0;
+                }
+                k++;
+            }
+            // If the character before the wildcard does not match or 2 chars before the string matches
+            if (mainString[part2index-1] != part1 || mainString[part2index-2] == part1)
             {
                 return 0;
             }
-            k++;
         }
-        
-        // If the character before the wildcard does not match
-        if (mainString[part2index-1] != part1)
+        else
         {
             return 0;
         }
@@ -122,6 +169,7 @@ int checkStar(char * findString, char * mainString)
     }
     return 1;
 }
+
 
 int readFile(char * fileName, char *findString, char *fullPathName, int isWildCard)
 {
@@ -139,13 +187,14 @@ int readFile(char * fileName, char *findString, char *fullPathName, int isWildCa
         {
             int isDot = checkDot(findString, tmp);
             int isStar = checkStar(findString, tmp);
-            if ((foundFlag == 0) && (isDot || isStar)) // Implement wildcards here
+            int isQuestion = checkQuestion(findString, tmp);
+            if ((foundFlag == 0) && (isDot || isStar || isQuestion)) // Test for wildcards
             {
                 foundFlag = 1;
                 printf("%s\n", strcat(fullPathName,fileName));
                 printf("%s", tmp);
             }
-            else if (foundFlag && (isDot || isStar)) // Implement wildcards here
+            else if (foundFlag && (isDot || isStar|| isQuestion)) // Test for wildcards
             {
                 printf("%s", tmp);
             }
