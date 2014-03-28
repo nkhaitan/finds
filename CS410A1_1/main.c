@@ -11,11 +11,55 @@
 
 /*
  WORK LEFT:
- 1.) Wildcards
- 2.) Make own printf statement
+ 1.) Make own printf statement
  */
 
 #define CHECKFILENAME 1; // 0: Match file name, 1: Don't match file name
+
+/* Convert the integer D to a string and save the string in BUF. If
+ BASE is equal to 'd', interpret that D is decimal, and if BASE is
+ equal to 'x', interpret that D is hexadecimal. */
+void itoa (char *buf, int base, int d)
+{
+    char *p = buf;
+    char *p1, *p2;
+    unsigned long ud = d;
+    int divisor = 10;
+    
+    /* If %d is specified and D is minus, put `-' in the head. */
+    if (base == 'd' && d < 0)
+    {
+        *p++ = '-';
+        buf++;
+        ud = -d;
+    }
+    else if (base == 'x')
+        divisor = 16;
+    
+    /* Divide UD by DIVISOR until UD == 0. */
+    do
+    {
+        int remainder = ud % divisor;
+        
+        *p++ = (remainder < 10) ? remainder + '0' : remainder + 'a' - 10;
+    }
+    while (ud /= divisor);
+    
+    /* Terminate BUF. */
+    *p = 0;
+    
+    /* Reverse BUF. */
+    p1 = buf;
+    p2 = p - 1;
+    while (p1 < p2)
+    {
+        char tmp = *p1;
+        *p1 = *p2;
+        *p2 = tmp;
+        p1++;
+        p2--;
+    }
+}
 
 int isAlNum(char *findString)
 {
@@ -53,6 +97,7 @@ int checkValidWildCards(char * findString)
 int checkDot(char * findString, char * mainString)
 {
     char test1String[1024];
+    char part2test[256];
     strcpy(test1String, findString);
     
     if (strchr(findString, '.') !=NULL)
@@ -60,6 +105,17 @@ int checkDot(char * findString, char * mainString)
         const char * part1 = strtok(test1String, ".");
         const char * part2 = strchr(findString, '.') + 1;
         const char * found = strstr(mainString, part1);
+        strcpy(part2test, part2);
+        
+        //Check for 2 wild cards
+        if(strchr(findString, '*'))
+        {
+            part2 = strtok(part2test,"*");
+        }
+        if(strchr(findString, '?'))
+        {
+            part2 = strtok(part2test,"?");
+        }
         if (found)
         {
             int part1index = found - mainString;
@@ -90,7 +146,6 @@ int checkDot(char * findString, char * mainString)
     {
         return 0;
     }
-    
     return 1;
 }
 
