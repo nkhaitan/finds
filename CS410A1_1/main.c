@@ -77,23 +77,23 @@ void my_printf(char * format,...)
             c = *format++;
             switch(c)
             {
-                case 'd':
-                case 'u':
-                case 'x':
-                    itoa(buf, c, *((int *) arg++));
-                    p = buf;
-                    while (*p)
-                    {
-                        putchar(*p++);
-                        count++;
-                    }
-                    break;
                 case 's':
                     p = *arg++;
                     if (!p)
                     {
                         p = "(null)";
                     }
+                    while (*p)
+                    {
+                        putchar(*p++);
+                        count++;
+                    }
+                    break;
+                case 'd':
+                case 'u':
+                case 'x':
+                    itoa(buf, c, *((int *) arg++));
+                    p = buf;
                     while (*p)
                     {
                         putchar(*p++);
