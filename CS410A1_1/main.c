@@ -9,16 +9,10 @@
 #include <dirent.h>
 #include <limits.h>
 
-/*
- WORK LEFT:
- 1.) Make own printf statement
- */
+// CHECKFILENAME = 0: Match file name.
+// CHECKFILENAME = 1: Don't match file name.
+#define CHECKFILENAME 1;
 
-#define CHECKFILENAME 1; // 0: Match file name, 1: Don't match file name
-
-/* Convert the integer D to a string and save the string in BUF. If
- BASE is equal to 'd', interpret that D is decimal, and if BASE is
- equal to 'x', interpret that D is hexadecimal. */
 void itoa (char *buf, int base, int d)
 {
     char *p = buf;
@@ -60,6 +54,62 @@ void itoa (char *buf, int base, int d)
         p2--;
     }
 }
+
+void my_printf(char * format,...)
+{
+    char **arg = (char **) &format;
+    int c;
+    char buf[20];
+    int count = 0;
+    
+    arg++;
+    
+    while ((c = *format++) != 0)
+    {
+        if (c != '%')
+        {
+            putchar(c);
+            count++;
+        }
+        else
+        {
+            char *p;
+            c = *format++;
+            switch(c)
+            {
+                case 'd':
+                case 'u':
+                case 'x':
+                    itoa(buf, c, *((int *) arg++));
+                    p = buf;
+                    while (*p)
+                    {
+                        putchar(*p++);
+                        count++;
+                    }
+                    break;
+                case 's':
+                    p = *arg++;
+                    if (!p)
+                    {
+                        p = "(null)";
+                    }
+                    while (*p)
+                    {
+                        putchar(*p++);
+                        count++;
+                    }
+                    break;
+                default:
+                    putchar (*((int *) arg++));
+                    count++;
+                    break;
+            }
+            
+        }
+    }
+}
+
 
 int isAlNum(char *findString)
 {
@@ -146,7 +196,7 @@ int checkDot(char * findString, char * mainString)
     {
         return 0;
     }
-    return 1;
+    return 1;  // Return 1 if the entire test is successful
 }
 
 int checkStar(char * findString, char * mainString)
@@ -184,7 +234,7 @@ int checkStar(char * findString, char * mainString)
     {
         return 0;
     }
-    return 1;
+    return 1; // Return 1 if the entire test is successful
 }
 
 int checkQuestion(char * findString, char * mainString)
@@ -222,7 +272,7 @@ int checkQuestion(char * findString, char * mainString)
     {
         return 0;
     }
-    return 1;
+    return 1;  // Return 1 if the entire test is successful
 }
 
 
@@ -246,12 +296,12 @@ int readFile(char * fileName, char *findString, char *fullPathName, int isWildCa
             if ((foundFlag == 0) && (isDot || isStar || isQuestion)) // Test for wildcards
             {
                 foundFlag = 1;
-                printf("%s\n", strcat(fullPathName,fileName));
-                printf("%s", tmp);
+                my_printf("%s\n", strcat(fullPathName,fileName));
+                my_printf("%s", tmp);
             }
             else if (foundFlag && (isDot || isStar|| isQuestion)) // Test for wildcards
             {
-                printf("%s", tmp);
+                my_printf("%s", tmp);
             }
         }
         else // If there are no valid wildcards
@@ -259,12 +309,12 @@ int readFile(char * fileName, char *findString, char *fullPathName, int isWildCa
             if ((strstr(tmp, findString)) && (foundFlag == 0)) // Implement wildcards here
             {
                 foundFlag = 1;
-                printf("%s\n", strcat(fullPathName,fileName));
-                printf("%s", tmp);
+                my_printf("%s\n", strcat(fullPathName,fileName));
+                my_printf("%s", tmp);
             }
             else if ((strstr(tmp, findString)) && foundFlag) // Implement wildcards here
             {
-                printf("%s", tmp);
+                my_printf("%s", tmp);
             }
         }
     }
@@ -300,16 +350,12 @@ void printdir(char *dir, char * findString, int checkFileName, char * findType, 
         lstat(entry->d_name,&statbuf);
         if(S_ISDIR(statbuf.st_mode))
         {
-            /* Found a directory, but ignore . and .. */
+            // Found a directory, but ignore . and ..
             if(strcmp(".",entry->d_name) == 0 ||strcmp("..",entry->d_name) == 0)
             {
                 continue;
             }
-            if(strstr(entry->d_name, findString))
-            {
-                printf("%*s%s/\n",depth,"",entry->d_name);
-            }
-            /* Recurse at a new indent level */
+            // Recurse at a new indent level
             printdir(entry->d_name,findString, checkFileName, findType, isWildCard, depth+4);
         }
         else if(strstr(entry->d_name, findString) || checkFileName)
@@ -390,11 +436,11 @@ int main (int argc, char **argv)
     fvalue == NULL ? fvalue = "0" : fvalue; // Flag to show NULL 'f' argument
     if (isWildCard == 2)
     {
-        printf("Invalid wildcard character(s) present in string '%s'\n",svalue);
+        fprintf (stderr, "Invalid wildcard character(s) present in string '%s'\n",svalue);
         return 0;
     }
     printdir(pvalue, svalue, checkFileName, fvalue, isWildCard, 0);
     for (index = optind; index < argc; index++)
-        printf ("Non-option argument %s\n", argv[index]);
+        fprintf (stderr, "Non-option argument %s\n", argv[index]);
     return 0;
 }
