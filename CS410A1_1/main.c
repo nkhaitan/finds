@@ -150,23 +150,32 @@ int checkDot(char * findString, char * mainString)
     char part2test[256];
     strcpy(test1String, findString);
     
-    if (strchr(findString, '.') !=NULL)
+    if (strchr(findString, '.') != NULL)
     {
         const char * part1 = strtok(test1String, ".");
         const char * part2 = strchr(findString, '.') + 1;
-        const char * found = strstr(mainString, part1);
         strcpy(part2test, part2);
         
-        //Check for 2 wild cards
-        if(strchr(findString, '*'))
+        //Check for 2 or more wild cards
+        if(strchr(part2, '*'))
         {
             part2 = strtok(part2test,"*");
         }
-        if(strchr(findString, '?'))
+        if(strchr(part2, '?'))
         {
             part2 = strtok(part2test,"?");
         }
-        if (found)
+        if(strchr(part1, '*'))
+        {
+            part1 = strchr(part1,'*');
+        }
+        if(strchr(part1, '?'))
+        {
+            part1 = strchr(part1,'?');
+        }
+        
+        const char * found = strstr(mainString, part1); // Find part1 in the main string
+        if (found && part1)
         {
             int part1index = found - mainString;
             int part2index = part1index + strlen(part1) + 1; // Index of the 2nd half of string
@@ -219,8 +228,13 @@ int checkStar(char * findString, char * mainString)
                 }
                 k++;
             }
-            // If the character before the wildcard does not match
-            if (mainString[part2index-1] != part1)
+            char previous = mainString[part2index-1];
+            for ( i = 1; mainString[part2index - i] == '*' || mainString[part2index - i] == '.' ; i++)
+            {
+                previous = mainString[part2index - i];
+            }
+            // If the character before the wildcard does not match and its not null
+            if (previous != part1 && previous != 0)
             {
                 return 0;
             }
@@ -257,8 +271,21 @@ int checkQuestion(char * findString, char * mainString)
                 }
                 k++;
             }
+            
+            // Ignore any previous wildcards
+            char previous = mainString[part2index-1];
+            for ( i = 1; mainString[part2index - i] == '*' || mainString[part2index - i] == '.' ; i++)
+            {
+                previous = mainString[part2index - i];
+            }
+            char penultimate = mainString[part2index-i];
+            for ( k = i; mainString[part2index - k] == '*' || mainString[part2index - k] == '.' ; k++)
+            {
+                penultimate = mainString[part2index - k];
+            }
+            
             // If the character before the wildcard does not match or 2 chars before the string matches
-            if (mainString[part2index-1] != part1 || mainString[part2index-2] == part1)
+            if (previous != part1 || penultimate == part1)
             {
                 return 0;
             }
